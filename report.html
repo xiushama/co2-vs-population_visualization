@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Report</title>
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Open Sans", sans-serif;
+        background-color: #f9fafb;
+        margin: 0;
+        padding: 40px 20px;
+        display: flex;
+        justify-content: center;
+      }
+
+      .container {
+        max-width: 800px;
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      .page-title {
+        text-align: center;
+        font-weight: 600;
+        font-size: clamp(1.25rem, 3.5vw, 1.85rem);
+        margin: 0 0 1.5rem;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        background: linear-gradient(
+          120deg,
+          #4f46e5 0%,
+          #7c3aed 45%,
+          #c026d3 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        filter: drop-shadow(0 2px 3px rgba(124, 58, 237, 0.25))
+          drop-shadow(0 4px 12px rgba(79, 70, 229, 0.15));
+      }
+
+      p {
+        color: #111;
+        font-size: 14px;
+        line-height: 1.7;
+        margin-bottom: 1.2rem;
+      }
+
+      a {
+        color: #7c3aed;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1 class="page-title">二氧化碳排放与人口关系的交互式可视化分析</h1>
+
+      <p>
+        我的可视化展示了在多年时间内，不同国家和大陆的二氧化碳（CO₂）排放量是如何变化的，以及这些变化如何与人口规模相关联。
+      </p>
+
+      <p>
+        我选择使用散点图（scatter
+        plot）作为主要的可视化方式，因为对于这个问题来说，这种形式最为直观和合适。我为用户提供了两种探索数据的方式：对数尺度（logarithmic
+        scale）和线性尺度（linear
+        scale）。对数尺度可以使可视化结果更加清晰，因为在这种尺度下，各个数据点更容易被区分和观察。而提供线性尺度的选项，则是为了让用户能够感知更加真实的数值差异，理解不同国家和地区之间在数据上的实际差距。我认为，这两种方式结合在一起，可以提供更加完整的理解。同时，这也具有一定的教学意义：它直观地展示了在不了解其原理的情况下，对数尺度可能带来的误导性。我也考虑过使用折线图（line
+        chart）作为替代方案，但最终认为在这个场景下意义不大，因此没有采用。
+      </p>
+
+      <p>
+        人口数据来源于
+        <a
+          href="https://data.worldbank.org/indicator/SP.POP.TOTL"
+          target="_blank"
+        >
+          Data Worldbank</a
+        >， 二氧化碳排放数据来源于
+        <a href="https://ourworldindata.org/co2-emissions" target="_blank">
+          Our World in Data</a
+        >。
+      </p>
+
+      <p>
+        本项目由我独立完成，所有任务均由我一人承担。整个开发过程持续了数天，每天投入数小时，总计大约为10小时。其中，最耗时的部分之一是数据的筛选与整理，因为在处理
+        CSV
+        文件的过程中，从下载到最终得到可用数据经历了较多问题。此外，在项目初期，确定具体的研究方向和可视化形式也具有一定难度，我花了较长时间来思考应当使用哪些数据以及采用何种方式进行可视化。
+      </p>
+    </div>
+  </body>
+</html>
