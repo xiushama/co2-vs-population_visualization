@@ -27,6 +27,38 @@
         background: linear-gradient(180deg, #fafafa 0%, #f3f4f6 100%);
       }
 
+      .report-button {
+        position: absolute;
+        top: 80px;
+        left: 40px;
+
+        width: 90px;
+        height: 90px;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+
+        background: #7c3aed;
+        color: white;
+
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+
+        border-radius: 12px;
+        text-decoration: none;
+
+        box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
+        transition: all 0.2s ease;
+      }
+
+      .report-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(124, 58, 237, 0.4);
+      }
+
       .page-title {
         text-align: center;
         font-weight: 600;
@@ -518,6 +550,10 @@
     </style>
   </head>
   <body>
+    <a href="report.html" class="report-button">
+      <span>View</span>
+      <span>Report</span>
+    </a>
     <h1 class="page-title">CO₂ Emissions vs Population by Year</h1>
 
     <div class="chart-wrap">
