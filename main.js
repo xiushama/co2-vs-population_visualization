@@ -1,12 +1,15 @@
+// Select main SVG element and define fixed dimensions and margins
 const svg = d3.select("#chart");
 const width = 1080;
 const height = 500;
 const margin = { top: 26, right: 28, bottom: 52, left: 88 };
 
+// Formats large numbers (e.g., 1M, 1B) for better readability on axes
 function formatAxisTick(v) {
   return d3.format("~s")(v).replace(/G/g, "B");
 }
 
+// Color palette assigned to each continent
 const continentColor = {
   Asia: "#e6c200",
   Africa: "#1a1a1a",
@@ -26,11 +29,13 @@ const continentOrder = [
   "Other",
 ];
 
+// Maps country codes to continents (fallback to "Other" if not found)
 function continentFor(code) {
   const map = window.continentByCode;
   return map && map[code] ? map[code] : "Other";
 }
 
+// Creates hidden tooltip element that appears on hover
 const tooltip = d3
   .select("body")
   .append("div")
@@ -46,7 +51,9 @@ const tooltip = d3
   .style("pointer-events", "none")
   .style("z-index", "10");
 
+// Load CSV data and initialize all visualization logic
 d3.csv("co2_vs_population_data.csv").then((data) => {
+  // and assign continent based on country code
   data.forEach((d) => {
     d.co2 = +d.co2;
     d.population = +d.population;
@@ -54,6 +61,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     d.continent = continentFor(d["country code"]);
   });
 
+  // Build lookup: country code → { name, continent }
   const metaByCode = d3.rollup(
     data,
     (v) => ({
@@ -63,12 +71,16 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     }),
     (d) => d["country code"],
   );
+
+  // Group countries by continent for filter UI
   const countriesByContinent = new Map();
   continentOrder.forEach((c) => countriesByContinent.set(c, []));
   for (const row of metaByCode.values()) {
     const arr = countriesByContinent.get(row.continent);
     if (arr) arr.push({ code: row.code, name: row.name });
   }
+
+  // Sort countries alphabetically inside each continent
   countriesByContinent.forEach((arr) =>
     arr.sort((a, b) =>
       a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
@@ -78,10 +90,12 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
   const selectedCodes = new Set(allCountryCodes);
   const expandedContinents = new Set(continentOrder);
 
+  // Extract and sort all unique years from dataset
   const years = Array.from(new Set(data.map((d) => d.year))).sort(
     (a, b) => a - b,
   );
 
+  // Configure year slider and label
   const slider = d3.select("#yearSlider");
   const label = d3.select("#yearLabel");
 
@@ -93,6 +107,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
 
   label.text(years[0]);
 
+  // Aggregate country data into continent-level totals for a given year
   function continentRowsForYear(year) {
     const filtered = data.filter(
       (d) => d.year === year && selectedCodes.has(d["country code"]),
@@ -109,6 +124,8 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
       .filter((d) => d.population > 0 && d.co2 > 0);
   }
 
+  // Compute global min/max values for population and CO2
+  // (including continent aggregates)
   const minPop = Math.max(
     1,
     d3.min(data, (d) => d.population),
@@ -138,6 +155,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
 
   svg.style("font-family", '"Open Sans", system-ui, sans-serif');
 
+  // Create groups for grid, axes, and plot area
   const gridG = svg
     .append("g")
     .attr("class", "grid")
@@ -155,6 +173,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
 
   const plot = svg.append("g").attr("class", "plot");
 
+  // Axis titles (labels for X and Y axes)
   const titleX = svg
     .append("text")
     .attr("class", "axis-title axis-title-x")
@@ -177,6 +196,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     .attr("font-size", "13px")
     .attr("font-weight", "600");
 
+  // Ensures data points stay within axis domain limits
   function clampToDomain(scale, v) {
     let [a, b] = scale.domain();
     if (a > b) {
@@ -185,10 +205,13 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     return Math.min(Math.max(v, a), b);
   }
 
+  // Recompute scales and redraw axes when mode or scale changes
   function refreshScalesAndAxes() {
     const linear = d3.select("#scaleToggle").property("checked");
     const continents = isContinentMode();
 
+    // Choose between linear and logarithmic scales
+    // and between country-level and continent-level domains
     if (linear) {
       if (continents) {
         x = d3
@@ -253,6 +276,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
       .tickSizeOuter(0)
       .tickPadding(10);
 
+    // Clear previous axes before redrawing
     gx.selectAll("*").remove();
     gy.selectAll("*").remove();
 
@@ -264,6 +288,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     const tickStroke = "#64748b";
     const tickWidth = 1.35;
 
+    // Apply custom styling to axes (lines, ticks, labels)
     function styleAxis(selection) {
       selection
         .select("path.domain")
@@ -303,6 +328,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     const xGridTicks = linear ? x.ticks(10) : x.ticks(5);
     const yGridTicks = linear ? y.ticks(10) : y.ticks(5);
 
+    // Draw background grid lines for better readability
     gridG
       .selectAll("line.grid-x")
       .data(xGridTicks)
@@ -345,6 +371,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     );
   }
 
+  // Convert data values to screen coordinates
   function cx(d) {
     return x(clampToDomain(x, d.population));
   }
@@ -353,6 +380,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     return y(clampToDomain(y, d.co2));
   }
 
+  // Defines fill and stroke styles for circles
   function dotStyle(d, linearCountryView) {
     const c = continentColor[d.continent] ?? continentColor.Other;
     const isAfrica = d.continent === "Africa";
@@ -370,53 +398,71 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     };
   }
 
+  // Check whether current view is continent aggregation mode
   function isContinentMode() {
     return d3.select("#viewToggle").property("checked");
   }
 
+  // Update UI labels for view toggle (countries vs continents)
   function syncToggleLabels() {
     const on = isContinentMode();
     d3.select(".toggle-countries").classed("active", !on);
     d3.select(".toggle-continents").classed("active", on);
   }
 
+  // Update UI labels for scale toggle (log vs linear)
   function syncScaleToggleLabels() {
     const linear = d3.select("#scaleToggle").property("checked");
     d3.select(".toggle-scale-log").classed("active", !linear);
     d3.select(".toggle-scale-linear").classed("active", linear);
   }
 
+  // Re-render chart when year, filters, or modes change
   function update(year) {
     const continentMode = isContinentMode();
     const linear = d3.select("#scaleToggle").property("checked");
     const linearCountryView = linear && !continentMode;
 
+    // Select data depending on current mode (countries or continents)
     let filtered = continentMode
       ? continentRowsForYear(year)
       : data.filter(
           (d) => d.year === year && selectedCodes.has(d["country code"]),
         );
 
+    // Radius proportional to CO2 (area ∝ CO2)
+    let radiusFn = null;
+
+    if (linearCountryView && filtered.length > 0) {
+      const co2Extent = d3.extent(filtered, (d) => d.co2);
+
+      const rScale = d3.scaleSqrt().domain(co2Extent).range([2, 14]); // min/max size — можешь подстроить
+
+      radiusFn = (d) => rScale(d.co2);
+    }
+
+    // Sort points in linear country mode to reduce overlap issues
     if (linearCountryView) {
       filtered = [...filtered].sort(
         (a, b) => a.population - b.population || a.co2 - b.co2,
       );
     }
 
-    const dotRadius = continentMode ? 33 : linearCountryView ? 3.5 : 5;
+    const dotRadius = continentMode ? 33 : linearCountryView ? 4 : 5;
     const dotOpacity = continentMode ? 0.88 : linearCountryView ? 0.7 : 0.78;
     const keyFn = continentMode ? (d) => d.continent : (d) => d["country code"];
 
+    // Bind data to circle elements
     const circles = plot.selectAll("circle").data(filtered, keyFn);
 
     circles
-      .enter()
+      .enter() // Create new circles for incoming data points
       .append("circle")
-      .attr("r", dotRadius)
+      .attr("r", (d) => (radiusFn ? radiusFn(d) : dotRadius))
       .attr("opacity", dotOpacity)
       .style("cursor", "pointer")
       .merge(circles)
-      .attr("r", dotRadius)
+      .attr("r", (d) => (radiusFn ? radiusFn(d) : dotRadius))
       .attr("opacity", dotOpacity)
       .attr("cx", (d) => cx(d))
       .attr("cy", (d) => cy(d))
@@ -430,6 +476,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
             continentMode ? s["stroke-width"] * 1.4 : s["stroke-width"],
           );
       })
+      // Tooltip behavior on hover
       .on("mouseover", function (event, d) {
         d3.select(this).raise();
         tooltip.style("display", "block");
@@ -469,11 +516,14 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     label.text(year);
   }
 
+  // Builds hierarchical filter (continent → countries)
   function renderFilterTree() {
+    // Clear and rebuild filter tree
     const root = document.getElementById("filterTree");
     if (!root) return;
     root.replaceChildren();
 
+    // Iterate over continents and create UI blocks
     continentOrder.forEach((cont) => {
       const countries = countriesByContinent.get(cont);
       if (!countries || countries.length === 0) return;
@@ -500,6 +550,8 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
       const nSel = countries.filter((c) => selectedCodes.has(c.code)).length;
       const lab = document.createElement("label");
       lab.className = "filter-continent-label";
+
+      // Checkbox controls selection of all countries in continent
       const contCb = document.createElement("input");
       contCb.type = "checkbox";
       contCb.checked = nSel === countries.length;
@@ -534,6 +586,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
       list.className = "filter-country-list";
       list.hidden = !isOpen;
 
+      // Create checkbox for each country
       countries.forEach(({ code, name }) => {
         const row = document.createElement("div");
         row.className = "filter-country-row";
@@ -566,6 +619,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     });
   }
 
+  // Show/hide filter panel
   const filterDropdownBtn = document.getElementById("filterDropdownBtn");
   const filterPanel = document.getElementById("filterPanel");
   if (filterDropdownBtn && filterPanel) {
@@ -578,6 +632,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     });
   }
 
+  // Select or deselect all countries
   d3.select("#selectAllFilter").on("click", () => {
     allCountryCodes.forEach((c) => selectedCodes.add(c));
     renderFilterTree();
@@ -590,10 +645,12 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     update(+slider.property("value"));
   });
 
+  // Update chart when slider changes
   slider.on("input", function () {
     update(+this.value);
   });
 
+  // Update chart when view mode or scale mode changes
   d3.select("#viewToggle").on("change", function () {
     syncToggleLabels();
     refreshScalesAndAxes();
@@ -606,6 +663,7 @@ d3.csv("co2_vs_population_data.csv").then((data) => {
     update(+slider.property("value"));
   });
 
+  // Sync UI state and render initial visualization
   syncToggleLabels();
   syncScaleToggleLabels();
   refreshScalesAndAxes();
